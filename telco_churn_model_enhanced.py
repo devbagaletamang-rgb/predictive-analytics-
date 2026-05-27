@@ -127,12 +127,12 @@ print("\n" + "=" * 60)
 print("STEP 6: Hyperparameter Tuning via GridSearchCV")
 print("=" * 60)
 
-# Define models with hyperparameter grids
+# Define models with hyperparameter grids (SIMPLIFIED to avoid memory issues)
 model_params = {
     "Logistic Regression": {
         "model": LogisticRegression(max_iter=1000, random_state=42),
         "params": {
-            'C': [0.001, 0.01, 0.1, 1, 10],
+            'C': [0.1, 1, 10],
             'penalty': ['l2'],
             'solver': ['lbfgs']
         }
@@ -140,31 +140,31 @@ model_params = {
     "Decision Tree": {
         "model": DecisionTreeClassifier(random_state=42),
         "params": {
-            'max_depth': [3, 5, 7, 10, 15],
-            'min_samples_split': [2, 5, 10],
-            'min_samples_leaf': [1, 2, 4]
+            'max_depth': [5, 10, 15],
+            'min_samples_split': [5, 10],
+            'min_samples_leaf': [2, 4]
         }
     },
     "Naive Bayes": {
         "model": GaussianNB(),
         "params": {
-            'var_smoothing': [1e-9, 1e-8, 1e-7, 1e-6]
+            'var_smoothing': [1e-9, 1e-7, 1e-5]
         }
     },
     "Random Forest": {
-        "model": RandomForestClassifier(random_state=42, n_jobs=-1),
+        "model": RandomForestClassifier(random_state=42, n_jobs=1),
         "params": {
-            'n_estimators': [50, 100, 200],
-            'max_depth': [5, 10, 15],
-            'min_samples_split': [2, 5]
+            'n_estimators': [50, 100],
+            'max_depth': [10, 15],
+            'min_samples_split': [5]
         }
     },
     "Gradient Boosting": {
         "model": GradientBoostingClassifier(random_state=42),
         "params": {
-            'n_estimators': [50, 100, 150],
-            'learning_rate': [0.01, 0.05, 0.1],
-            'max_depth': [3, 5, 7]
+            'n_estimators': [50, 100],
+            'learning_rate': [0.05, 0.1],
+            'max_depth': [3, 5]
         }
     }
 }
@@ -178,9 +178,9 @@ for name, config in model_params.items():
     grid_search = GridSearchCV(
         config['model'],
         config['params'],
-        cv=5,
+        cv=3,  # Reduced from 5 to 3 for faster computation
         scoring='f1',
-        n_jobs=-1,
+        n_jobs=1,  # FIXED: Changed from -1 to 1 to avoid parallel processing issues
         verbose=0
     )
     
@@ -222,11 +222,11 @@ print("\n✓ Results saved to 'model_results.csv'")
 # 8. CROSS-VALIDATION SCORES
 # =====================================================
 print("\n" + "=" * 60)
-print("STEP 8: Cross-Validation Scores (5-Fold)")
+print("STEP 8: Cross-Validation Scores (3-Fold)")
 print("=" * 60)
 
 for name, model in best_models.items():
-    cv_scores = cross_val_score(model, X_train_balanced, y_train_balanced, cv=5, scoring='f1')
+    cv_scores = cross_val_score(model, X_train_balanced, y_train_balanced, cv=3, scoring='f1')
     print(f"\n{name}:")
     print(f"  CV Scores: {cv_scores}")
     print(f"  Mean CV Score: {cv_scores.mean():.4f} (+/- {cv_scores.std():.4f})")
@@ -367,3 +367,6 @@ print("=" * 60)
 print(f"\n🏆 Best Model: {best_model_name}")
 print(f"📊 Best F1-Score: {results_df.iloc[0]['F1-Score']:.4f}")
 print(f"📈 Best ROC-AUC: {results_df.iloc[0]['ROC-AUC']:.4f}")
+print("\n💡 TIP: GridSearchCV used n_jobs=1 (no parallel processing)")
+print("💡 TIP: CV folds reduced from 5 to 3 for faster execution")
+print("💡 TIP: Hyperparameter grid simplified to reduce memory usage")
